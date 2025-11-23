@@ -1,79 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GreenSort: Web Assistant</title>
-    <style>
-        body { font-family: sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
-        video { width: 100%; max-width: 640px; border: 2px solid #ccc; border-radius: 8px; display: block; margin: 10px auto; }
-        #status { margin-top: 15px; padding: 10px; background-color: #e9e9e9; border-radius: 4px; font-size: 1.2em; text-align: center; }
-        .label-biodegradable { color: green; font-weight: bold; }
-        .label-hazardous { color: red; font-weight: bold; }
-        .label-default { color: blue; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenSort Waste Segregation</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Roboto', sans-serif;
+        background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        justify-content: flex-start;
+    }
+    h1 {
+        margin: 30px 0 20px;
+        font-size: 2.2rem;
+        color: #4CAF50;
+        text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        text-align: center;
+    }
+    .video-container {
+        position: relative;
+        border: 5px solid #4CAF50;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+        width: 800px;
+        max-width: 95%;
+    }
+    #video-feed {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+    }
+    #prediction {
+        margin-top: 25px;
+        font-size: 1.3rem;
+        background: rgba(0,0,0,0.5);
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        max-width: 90%;
+        text-align: center;
+        line-height: 1.5;
+    }
+    footer {
+        margin-top: 40px;
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>GreenSort: Live Waste Classification</h1>
-        <video id="webcam" autoplay playsinline></video>
-        <div id="status">Waiting for input...</div>
-    </div>
+<h1>GreenSort: Your Personal Waste Segregation Assistant</h1>
+<div class="video-container">
+    <img id="video-feed" src="{{ url_for('video_feed') }}">
+</div>
+<div id="prediction">Waiting for prediction...</div>
+<footer>Powered by AI & TensorFlow | Your Eco Companion 🌱</footer>
 
-    <script>
-        const video = document.getElementById('webcam');
-        const statusDiv = document.getElementById('status');
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        const intervalTime = 1000; // 1 second between classifications
-
-        // Access webcam
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-                video.addEventListener('loadeddata', () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    setInterval(sendFrame, intervalTime);
-                });
-            })
-            .catch(err => {
-                console.error("Webcam error:", err);
-                statusDiv.innerText = "Cannot access webcam!";
-            });
-
-        // Send frame to Flask
-        function sendFrame() {
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataURL = canvas.toDataURL('image/jpeg');
-
-            fetch('/predict', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: dataURL })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.prediction_text)
-                    updateStatus(data.prediction_text);
-                else
-                    statusDiv.innerText = "Error in prediction";
-            })
-            .catch(err => {
-                console.error("Fetch error:", err);
-                statusDiv.innerText = "Error contacting server!";
-            });
-        }
-
-        function updateStatus(label) {
-            statusDiv.innerText = label;
-            statusDiv.className = '';
-            if (label.includes('Biodegradable') || label.includes('Solid Waste')) statusDiv.classList.add('label-biodegradable');
-            else if (label.includes('Hazardous') || label.includes('E-waste') || label.includes('Rejected Waste')) statusDiv.classList.add('label-hazardous');
-            else statusDiv.classList.add('label-default');
-        }
-    </script>
+<script>
+async function updatePrediction() {
+    try {
+        const response = await fetch('/get_result');
+        const data = await response.json();
+        document.getElementById('prediction').innerText =
+            `${data.label}\n${data.strategy}`;
+    } catch (e) {
+        document.getElementById('prediction').innerText = 'Error fetching prediction';
+    }
+}
+setInterval(updatePrediction, 1000); // every second
+</script>
 </body>
 </html>

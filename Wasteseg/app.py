@@ -1,59 +1,89 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, render_template, Response, jsonify
 import cv2
-import base64
+import tensorflow as tf
 import numpy as np
-from cvzone.ClassificationModule import Classifier
 
 app = Flask(__name__)
 
-# Load classifier
-classifier = Classifier('Wasteseg/Model/keras_model.h5', 'Wasteseg/Model/labels.txt')
+# Load model & labels
+MODEL_PATH = 'Wasteseg/Model/keras_model.h5'
+LABELS_PATH = 'Wasteseg/Model/labels.txt'
+model = tf.keras.models.load_model(MODEL_PATH)
 
-CLASS_MAPPING = {
-    0: 'Unknown/None',
-    1: 'Cardboard-Biodegradable',
-    2: 'Glass-Solid Waste',
-    3: 'Footwear-Textile waste',
-    4: 'Clothes-Textile waste',
-    5: 'Metal-Non-Biodegradable',
-    6: 'Paper-Biodegradable',
-    7: 'Battery-Hazardous',
-    8: 'Organic Waste-Biodegradable',
-    9: 'Toothbrush-Non-Biodegradable',
-    10: 'Diaper/Pads-Rejected Waste',
-    11: 'Mask-Household waste',
-    12: 'Plastic-Non-biodegradable',
-    13: 'Phone-E-waste',
-}
+with open(LABELS_PATH, 'r') as f:
+    labels_list = [line.strip() for line in f.readlines()]
 
-# Serve HTML page
+# Webcam
+cap = cv2.VideoCapture(1)
+
+# Label + strategy mapping
+def get_label_and_strategy(classID):
+    categories = {
+        1: ('Cardboard-Biodegradable', 'Recycle by composting or repurposing.'),
+        2: ('Glass-Solid Waste', 'Clean and place in the recycling bin for glass.'),
+        3: ('Footwear-Textile waste', 'Donate or recycle through a textile recycling center.'),
+        4: ('Clothes-Textile waste', 'Donate or repurpose as cleaning rags.'),
+        5: ('Metal-Non-Biodegradable', 'Recycle at a metal collection facility.'),
+        6: ('Paper-Biodegradable', 'Recycle in the paper recycling bin.'),
+        7: ('Battery-Hazardous', 'Dispose at designated battery recycling centers.'),
+        8: ('Organic Waste-Biodegradable', 'Compost to create natural fertilizer.'),
+        9: ('Toothbrush-Non-Biodegradable', 'Reuse creatively or place in non-recyclable waste.'),
+        10: ('Diaper/Pads-Rejected Waste', 'Wrap and place in non-recyclable waste.'),
+        11: ('Mask-Household waste', 'Dispose of in household waste with proper containment.'),
+        12: ('Plastic-Non-biodegradable', 'Check the type and recycle or dispose accordingly.'),
+        13: ('Phone-E-waste', 'Take to an electronic recycling facility.')
+    }
+    return categories.get(classID, ('Unknown', 'No strategy available.'))
+
+def preprocess_frame(frame):
+    img = cv2.resize(frame, (224, 224))
+    img = img / 255.0
+    img = np.expand_dims(img, axis=0)
+    img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    img = (img / 255.0 - 0.5) * 2  # scale to [-1,1]
+    return img
+
+def generate_frames():
+    while True:
+        success, frame = cap.read()
+        if not success:
+            continue
+
+        # Prediction
+        img_input = preprocess_frame(frame)
+        preds = model.predict(img_input)
+        classID = int(np.argmax(preds[0])) + 1
+        label, _ = get_label_and_strategy(classID)
+
+        # Overlay label
+        cv2.putText(frame, label, (10, 40), cv2.FONT_HERSHEY_SIMPLEX,
+                    1, (0, 255, 0), 2, cv2.LINE_AA)
+
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame_bytes = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(generate_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/get_result')
+def get_result():
+    success, frame = cap.read()
+    if success:
+        img_input = preprocess_frame(frame)
+        preds = model.predict(img_input)
+        classID = int(np.argmax(preds[0])) + 1
+        label, strategy = get_label_and_strategy(classID)
+        return jsonify({'label': label, 'strategy': strategy})
+    return jsonify({'label': 'No result', 'strategy': 'No data'})
+
 @app.route('/')
-def home():
+def index():
     return render_template('index.html')
 
-# Prediction endpoint
-@app.route('/predict', methods=['POST'])
-def predict():
-    data = request.json
-    if not data or 'image' not in data:
-        return jsonify({'error': 'No image provided'}), 400
-
-    img_data = data['image']
-    try:
-        encoded_data = img_data.split(',')[1] if ',' in img_data else img_data
-        np_arr = np.frombuffer(base64.b64decode(encoded_data), np.uint8)
-        img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-        if img is None:
-            return jsonify({'error': 'Could not decode image'}), 400
-    except Exception as e:
-        return jsonify({'error': f'Image decoding failed: {str(e)}'}), 400
-
-    try:
-        prediction, classID = classifier.getPrediction(img)
-        class_name = CLASS_MAPPING.get(classID, 'Unknown Waste Type')
-        return jsonify({'class_id': int(classID), 'prediction_text': class_name})
-    except Exception as e:
-        return jsonify({'error': f'Prediction failed: {str(e)}'}), 500
-
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Use host='0.0.0.0' so it works on local network too
+    app.run(debug=True, threaded=True, host='0.0.0.0')
