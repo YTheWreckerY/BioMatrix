@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./App.css";
+import bgVideo from "./background_vid.mp4"; 
 
 function App() {
   const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ function App() {
   const [carbonFootprint, setCarbonFootprint] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const totalSlides = 16;
+  const totalSlides = 15; 
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -96,181 +97,323 @@ function App() {
       formData.fuelTypeVehicle === "Petrol" ? 500 :
       formData.fuelTypeVehicle === "Diesel" ? 450 :
       formData.fuelTypeVehicle === "Gasoline" ? 600 :
-      formData.fuelTypeVehicle === "Hydrogen" ? 250 : 0;
+      formData.fuelTypeVehicle === "Hydrogen" ? 250 :
+      formData.fuelTypeVehicle === "Electric" ? 50 : 0;
+      
+    userTotalData +=
+        formData.fuelTypeDomestic === "Gas" ? 300 :
+        formData.fuelTypeDomestic === "Electric" ? 100 :
+        formData.fuelTypeDomestic === "Wood" ? 400 : 0;
 
-    return userTotalData;
+    userTotalData += Number(formData.DailyTravel) * 10 || 0;
+
+    return Math.round(userTotalData);
   };
 
   const handleSubmit = e => {
     e.preventDefault();
     const total = calculateCarbonFootprint();
     setCarbonFootprint(total);
-    setCurrentSlide(15);
+    setCurrentSlide(totalSlides); 
   };
 
-  const nextSlide = () => setCurrentSlide(prev => (prev + 1) < totalSlides ? prev + 1 : prev);
-  const prevSlide = () => setCurrentSlide(prev => prev > 0 ? prev - 1 : prev);
-
-  <video autoPlay muted loop id="background-video" style={{position: "fixed", right: 0, bottom: 0, minWidth: "100vw",minHeight: "100vh", zIndex: -1, objectFit: "cover" }}>
-  <source src="../background_vid.mp4" type="video/mp4" />
-  Your browser does not support the video tag.
-  </video>
-
+  const nextSlide = () => setCurrentSlide(prev => (prev + 1 < totalSlides + 1 ? prev + 1 : prev));
+  const prevSlide = () => setCurrentSlide(prev => (prev > 0 ? prev - 1 : prev));
 
   return (
-    <div>
-      <h1 className="title">CarboPrint</h1>
+    <div id="root">
+      <video autoPlay muted loop playsInline className="bg-video">
+        <source src={bgVideo} type="video/mp4" />
+      </video>
+
+      <h1 className="title">CarboPrint Calculator</h1>
+
       <form onSubmit={handleSubmit}>
         {currentSlide === 0 && (
-          <>
-            <label htmlFor="firstName">First Name:</label>
-            <input type="text" id="firstName" name="firstName" required value={formData.firstName} onChange={handleChange} />
-            <br /><br />
-            <label htmlFor="lastName">Last Name:</label>
-            <input type="text" id="lastName" name="lastName" required value={formData.lastName} onChange={handleChange} />
-          </>
+          <div className="form-slide">
+            <label htmlFor="firstName">First Name</label>
+            <input 
+              className="form" 
+              id="firstName"
+              placeholder="Enter First Name" 
+              name="firstName" 
+              value={formData.firstName} 
+              onChange={handleChange} 
+            />
+            
+            <label htmlFor="lastName">Last Name</label>
+            <input 
+              className="form" 
+              id="lastName"
+              placeholder="Enter Last Name" 
+              name="lastName" 
+              value={formData.lastName} 
+              onChange={handleChange} 
+            />
+          </div>
         )}
+
         {currentSlide === 1 && (
-          <>
-            <label htmlFor="vehicleOwned">Do you own a vehicle? (Yes/No)</label>
-            <input type="text" id="vehicleOwned" name="vehicleOwned" value={formData.vehicleOwned} onChange={handleChange} />
-          </>
+          <div className="form-slide">
+            <label htmlFor="vehicleOwned">Do you own a vehicle?</label>
+            <select
+              id="vehicleOwned"
+              name="vehicleOwned" 
+              value={formData.vehicleOwned} 
+              onChange={handleChange}
+            >
+              <option value="">Select an option</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 2 && (
-          <>
-            <label htmlFor="foodType">Choose one of the food types</label>
-            <input list="foodTypes" id="foodType" name="foodType" value={formData.foodType} onChange={handleChange} />
-            <datalist id="foodTypes">
-              <option value="Vegetarian" />
-              <option value="Lacto-Vegetarian" />
-              <option value="Non-Vegetarian" />
-              <option value="Pescetarian" />
-              <option value="Flexitarian" />
-            </datalist>
-          </>
+          <div className="form-slide">
+            <label htmlFor="foodType">Choose one of the food types:</label>
+            <select 
+              id="foodType"
+              name="foodType" 
+              value={formData.foodType} 
+              onChange={handleChange} 
+            >
+              <option value="">Select a food type</option>
+              <option value="Vegetarian">Vegetarian (No meat, eggs)</option>
+              <option value="Lacto-Vegetarian">Lacto-Vegetarian (Includes dairy)</option>
+              <option value="Pescetarian">Pescetarian (Includes fish/seafood)</option>
+              <option value="Flexitarian">Flexitarian (Mostly vegetarian, occasional meat)</option>
+              <option value="Non-Vegetarian">Non-Vegetarian (Eats meat regularly)</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 3 && (
-          <>
-            <label htmlFor="meatType">
-              Choose multiple meats you eat from the list (space separated), leave empty if vegetarian
-            </label>
-            <input type="text" id="meatType" name="meatType" value={formData.meatType} onChange={handleChange} />
-            <ul style={{ listStyleType: "none" }}>
-              <li>Beef</li>
-              <li>Mutton</li>
-              <li>Bacon</li>
-              <li>Pork</li>
-              <li>Turkey</li>
-              <li>Duck</li>
-              <li>Chicken</li>
-              <li>Seafood</li>
-            </ul>
-          </>
+          <div className="form-slide">
+            <label htmlFor="meatType">Which meat do you consume most often?</label>
+            <select 
+              id="meatType"
+              name="meatType" 
+              value={formData.meatType} 
+              onChange={handleChange} 
+            >
+              <option value="">Select a meat type</option>
+              <option value="Beef">Beef</option>
+              <option value="Mutton">Mutton/Lamb</option>
+              <option value="Pork">Pork (Bacon/Ham/Pork)</option>
+              <option value="Turkey">Turkey</option>
+              <option value="Duck">Duck</option>
+              <option value="Chicken">Chicken</option>
+              <option value="Seafood">Seafood/Fish</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 4 && (
-          <>
-            <label htmlFor="clothType">
-              What type of cloth do you mostly use? Choose one from the list
-            </label>
-            <input type="text" id="clothType" name="clothType" value={formData.clothType} onChange={handleChange} />
-            <ul>
-              <li>Silk</li>
-              <li>Velvet</li>
-              <li>Georgette</li>
-              <li>Nylon</li>
-              <li>Wool</li>
-              <li>Rayon</li>
-              <li>Denim</li>
-              <li>Cotton</li>
-            </ul>
-          </>
+          <div className="form-slide">
+            <label htmlFor="clothType">What type of cloth do you purchase most often?</label>
+            <select
+              id="clothType"
+              name="clothType" 
+              value={formData.clothType} 
+              onChange={handleChange}
+            >
+              <option value="">Select a cloth type</option>
+              <option value="Cotton">Cotton</option>
+              <option value="Denim">Denim</option>
+              <option value="Rayon">Rayon/Viscose</option>
+              <option value="Wool">Wool</option>
+              <option value="Nylon">Nylon/Polyester (Synthetic)</option>
+              <option value="Georgette">Georgette/Chiffon</option>
+              <option value="Velvet">Velvet</option>
+              <option value="Silk">Silk</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 5 && (
-          <>
-            <label htmlFor="IntTravelPerYear">
-              How many times do you travel internationally per year?
-            </label>
-            <input type="number" id="IntTravelPerYear" name="IntTravelPerYear" value={formData.IntTravelPerYear} onChange={handleChange} />
-          </>
+          <div className="form-slide">
+            <label htmlFor="IntTravelPerYear">International flights per year (Round Trips):</label>
+            <input 
+              type="number" 
+              id="IntTravelPerYear"
+              name="IntTravelPerYear" 
+              value={formData.IntTravelPerYear} 
+              onChange={handleChange} 
+              min="0"
+              placeholder="0 for none"
+            />
+          </div>
         )}
+
         {currentSlide === 6 && (
-          <>
-            <label htmlFor="buildingType">
-              What type of building do you live in? Choose one from list
-            </label>
-            <input type="text" id="buildingType" name="buildingType" value={formData.buildingType} onChange={handleChange} />
-            <ul>
-              <li>High-Rise</li>
-              <li>Independent</li>
-              <li>Low-Rise</li>
-            </ul>
-          </>
+          <div className="form-slide">
+            <label htmlFor="buildingType">Type of building you live in:</label>
+            <select
+              id="buildingType"
+              name="buildingType" 
+              value={formData.buildingType} 
+              onChange={handleChange}
+            >
+              <option value="">Select a building type</option>
+              <option value="Independent">Independent House/Villa</option>
+              <option value="High-Rise">Apartment (High-Rise)</option>
+              <option value="Low-Rise">Apartment (Low-Rise/Block)</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 7 && (
-          <>
-            <label htmlFor="waterUsageDay">How many litres of water you use per day?</label>
-            <input type="number" id="waterUsageDay" name="waterUsageDay" value={formData.waterUsageDay} onChange={handleChange} />
-          </>
+          <div className="form-slide">
+            <label htmlFor="waterUsageDay">Estimated daily water usage (Liters):</label>
+            <input 
+              type="number" 
+              id="waterUsageDay"
+              name="waterUsageDay" 
+              value={formData.waterUsageDay} 
+              onChange={handleChange} 
+              min="0"
+              placeholder="e.g., 150"
+            />
+          </div>
         )}
+
         {currentSlide === 8 && (
-          <>
-            <label htmlFor="transportType">
-              What type of transport do you use? Type one from the list
-            </label>
-            <input type="text" id="transportType" name="transportType" value={formData.transportType} onChange={handleChange} />
-            <ul>
-              <li>Bus</li>
-              <li>Bike</li>
-              <li>Car</li>
-              <li>Train</li>
-            </ul>
-          </>
+          <div className="form-slide">
+            <label htmlFor="transportType">Primary daily transport type:</label>
+            <select
+              id="transportType"
+              name="transportType" 
+              value={formData.transportType} 
+              onChange={handleChange}
+            >
+              <option value="">Select a transport type</option>
+              <option value="Bus">Bus/Public Transport</option>
+              <option value="Train">Train/Metro</option>
+              <option value="Bike">Motorcycle/Scooter</option>
+              <option value="Car">Car</option>
+              <option value="Walk/Cycle">Walk/Cycle (Low Impact)</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 9 && (
-          <>
-            <label htmlFor="workCulture">Do you work at home/at office?</label>
-            <input type="text" id="workCulture" name="workCulture" value={formData.workCulture} onChange={handleChange} />
-          </>
+          <div className="form-slide">
+            <label htmlFor="workCulture">Primary work location:</label>
+            <select
+              id="workCulture"
+              name="workCulture" 
+              value={formData.workCulture} 
+              onChange={handleChange}
+            >
+              <option value="">Select location</option>
+              <option value="at home">Work from Home (at home)</option>
+              <option value="at office">Work at Office (at office)</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 10 && (
-          <>
-            <label htmlFor="Gardens">Do you garden plants or not? (Yes/No)</label>
-            <input type="text" id="Gardens" name="Gardens" value={formData.Gardens} onChange={handleChange} />
-          </>
+          <div className="form-slide">
+            <label htmlFor="Gardens">Do you have a personal garden/green space?</label>
+            <select
+              id="Gardens"
+              name="Gardens" 
+              value={formData.Gardens} 
+              onChange={handleChange}
+            >
+              <option value="">Select an option</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 11 && (
-          <>
-            <label htmlFor="fuelTypeVehicle">What fuel are you using for your vehicles?</label>
-            <input type="text" id="fuelTypeVehicle" name="fuelTypeVehicle" value={formData.fuelTypeVehicle} onChange={handleChange} />
-          </>
+          <div className="form-slide">
+            <label htmlFor="fuelTypeVehicle">Vehicle fuel type (if owned):</label>
+            <select
+              id="fuelTypeVehicle"
+              name="fuelTypeVehicle" 
+              value={formData.fuelTypeVehicle} 
+              onChange={handleChange}
+            >
+              <option value="">Select fuel type</option>
+              <option value="Petrol">Petrol/Gasoline</option>
+              <option value="Diesel">Diesel</option>
+              <option value="Gasoline">LPG/CNG/Gasoline</option>
+              <option value="Hydrogen">Hydrogen</option>
+              <option value="Electric">Electric/Hybrid</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 12 && (
-          <>
-            <label htmlFor="fuelTypeDomestic">What fuel are you using at home? For domestic use?</label>
-            <input type="text" id="fuelTypeDomestic" name="fuelTypeDomestic" value={formData.fuelTypeDomestic} onChange={handleChange} />
-          </>
+          <div className="form-slide">
+            <label htmlFor="fuelTypeDomestic">Primary home heating/cooking fuel type:</label>
+            <select
+              id="fuelTypeDomestic"
+              name="fuelTypeDomestic" 
+              value={formData.fuelTypeDomestic} 
+              onChange={handleChange}
+            >
+              <option value="">Select fuel type</option>
+              <option value="Gas">Natural Gas/LPG</option>
+              <option value="Electric">Electricity (Grid)</option>
+              <option value="Wood">Wood/Coal/Biomass</option>
+            </select>
+          </div>
         )}
+
         {currentSlide === 13 && (
-          <>
-            <label htmlFor="DailyTravel">How many kilometres do you travel daily?</label>
-            <input type="number" id="DailyTravel" name="DailyTravel" value={formData.DailyTravel} onChange={handleChange} />
-          </>
+          <div className="form-slide">
+            <label htmlFor="DailyTravel">Average daily commute distance (km):</label>
+            <input 
+              type="number" 
+              id="DailyTravel"
+              name="DailyTravel" 
+              value={formData.DailyTravel} 
+              onChange={handleChange} 
+              min="0"
+              placeholder="Distance one way (km)"
+            />
+          </div>
         )}
+
         {currentSlide === 14 && (
-          <>
-            <button type="submit">Submit</button>
-          </>
+          <div className="form-slide">
+            <button type="submit">Calculate Footprint</button>
+          </div>
         )}
-        {currentSlide === 15 && (
-          <>
-            <h1>Your carbon footprint is:</h1>
-            <h2>{carbonFootprint !== null ? carbonFootprint : "Please submit the form."}</h2>
-          </>
+
+        {currentSlide === totalSlides && (
+          <div className="result-screen">
+            <h1>Your Estimated Annual Carbon Footprint:</h1>
+            <h2>{carbonFootprint ? `${carbonFootprint} kg CO2e` : 'N/A'}</h2>
+            <p>
+                <small>*This is an estimation based on your input and general carbon factors.</small>
+            </p>
+          </div>
         )}
       </form>
-      <br />
-      <button onClick={prevSlide} disabled={currentSlide === 0}>Previous</button>
-      <button onClick={nextSlide} disabled={currentSlide === totalSlides - 1 || currentSlide === 15}>Next</button>
+
+      <div className="navigation-controls">
+        <button 
+          className="prev" 
+          onClick={prevSlide} 
+          disabled={currentSlide === 0 || currentSlide === totalSlides}
+        >
+          &larr; Previous
+        </button>
+        <button 
+          className="next" 
+          onClick={nextSlide} 
+          disabled={currentSlide >= totalSlides - 1 || currentSlide === totalSlides}
+        >
+          Next &rarr;
+        </button>
+      </div>
+
     </div>
   );
 }

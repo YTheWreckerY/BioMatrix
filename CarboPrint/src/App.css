@@ -1,42 +1,165 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121212;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #f0f0f0;
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+}
+
+.bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -1;
+  filter: brightness(0.25) blur(2px);
+}
+
+.title {
+  font-size: 3.5rem;
+  margin-bottom: 2rem;
   text-align: center;
+  color: #e0e0e0;
+  font-weight: 300;
+  letter-spacing: 2px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+h1,
+h2 {
+  text-align: center;
+  color: #00bcd4;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.form-slide {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  min-width: 350px;
+  max-width: 500px;
+  margin-bottom: 20px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #bdbdbd;
+  margin-top: 15px;
 }
 
-.card {
-  padding: 2em;
+input,
+button,
+select {
+  padding: 12px 16px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 5px;
 }
 
-.read-the-docs {
-  color: #888;
+input,
+select {
+  background-color: #333333;
+  color: #ffffff;
+  border: 1px solid #555555;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #00bcd4;
+  box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+}
+
+input[list] {
+  padding-right: 30px;
+}
+
+.navigation-controls {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 500px;
+  margin-top: 20px;
+}
+
+.prev,
+.next,
+button[type="submit"] {
+  background-color: #00bcd4;
+  color: #121212;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s, opacity 0.3s;
+  width: auto;
+  flex-grow: 1;
+  margin: 0 10px;
+}
+
+.prev:hover,
+.next:hover,
+button[type="submit"]:hover:not(:disabled) {
+  background-color: #0097a7;
+  transform: translateY(-2px);
+}
+
+.prev:disabled,
+.next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+button[type="submit"] {
+  margin-top: 25px;
+  width: 100%;
+}
+
+.result-screen {
+  text-align: center;
+  padding: 3rem;
+  background-color: rgba(0, 188, 212, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.result-screen h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #e0e0e0;
+}
+
+.result-screen h2 {
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: #a5d6a7;
+}
+
+.start-title {
+  margin-top: 200px;
+  color: white;
+  font-size: 4.2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #e0e0e0;
+  font-weight: 300;
+  letter-spacing: 2px;
 }
